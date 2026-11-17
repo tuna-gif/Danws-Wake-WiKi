@@ -173,10 +173,10 @@ footer{color:var(--muted);font-size:12px;margin-top:48px}
 /* 사이트 이름은 여기서 바꿀 수 있습니다 */
 var BRAND={ko:'검신제로 공략 가이드',en:"Dawn's Wake Guide"};
 var UI={
- ko:{search:'퀘스트, 보스, 카드, 용어 검색',all:'전체',filter:'이 페이지에서 찾기',results:'검색 결과',none:'결과가 없습니다.',items:'건',explore:'둘러보기',
+ ko:{search:'퀘스트, 카드, 용어 검색',all:'전체',filter:'이 페이지에서 찾기',results:'검색 결과',none:'결과가 없습니다.',items:'건',explore:'둘러보기',
    pre:'선행',reward:'보상',steps:'진행',main:'메인 퀘스트',outer:'외공 방어',inner:'내공 방어',weak:'약점격파',key:'핵심',phase:['형','동생'],
    lv:'수치 기준',cd:'재사용 대기',passive:'패시브',rage:'분노',cap:'상한',types:{'메인':'메인','세력':'세력','서브':'서브','입문':'입문','던전':'던전'},updated:'자료 기준일'},
- en:{search:'Search quests, bosses, cards, terms',all:'All',filter:'Filter this page',results:'Search results',none:'No results.',items:'items',explore:'Explore',
+ en:{search:'Search quests, cards, terms',all:'All',filter:'Filter this page',results:'Search results',none:'No results.',items:'items',explore:'Explore',
    pre:'Requires',reward:'Rewards',steps:'Steps',main:'Main quests',outer:'EXT DEF',inner:'Inner DEF',weak:'Weakness Break',key:'Key',phase:['Elder','Younger'],
    lv:'Values at',cd:'Cooldown',passive:'Passive',rage:'Rage',cap:'cap',updated:'Data as of'}
 };
@@ -297,7 +297,7 @@ function generic(m){var all=rowsOf(m.sheet),c=cols(D[m.sheet][0]),v=vis(c),fi=id
     rs.forEach(function(r){h+='<tr>'+show.map(function(x){return'<td'+(x.i===ti?' class="name"':'')+'>'+md(r[x.i])+'</td>'}).join('')+'</tr>'});h+='</tbody></table></div>'}
   return h+(rs.length?'':'<p class="empty">'+u('none')+'</p>')}
 
-function home(){var h='<div class="hero"><h1>'+esc(BRAND[L])+'</h1><p>'+esc(M(MENU[0],'desc'))+'</p></div>'+article('home')+'<div class="sec">'+u('explore')+'</div><div class="tiles">';
+function home(){var h='<div class="hero"><h1>'+esc(BRAND[L])+'</h1><p>'+(L==='en'?'Quests, strategy cards and key terms in one place.':'퀘스트, 전략 카드, 용어를 한곳에서 찾아보세요.')+'</p></div>'+article('home')+'<div class="sec">'+u('explore')+'</div><div class="tiles">';
   MENU.slice(1).forEach(function(m){h+='<a class="tile" href="#'+m.id+'"><span aria-hidden="true" style="font-size:20px">'+esc(m.icon)+'</span><b>'+esc(M(m,'title'))+'</b><span>'+esc(M(m,'desc'))+'</span></a>'});
   return h+'</div>'}
 function search(q){var ql=q.toLowerCase(),h='<h1>'+u('results')+'</h1><p class="lead">“'+esc(q)+'”</p>',n=0;
@@ -312,7 +312,7 @@ function render(){if(!D)return;document.getElementById('nav').innerHTML=nav();
   var el=document.getElementById('main'),gq=document.getElementById('q').value.trim();
   if(gq){el.innerHTML=search(gq);return}
   var m=MENU.filter(function(x){return x.id===PAGE})[0]||MENU[0];
-  if(m.id==='home'){el.innerHTML=home()+'<footer>'+u('updated')+' 2026-10-30</footer>';return}
+  if(m.id==='home'){el.innerHTML=home();return}
   var h='<h1>'+esc(m.icon)+' '+esc(M(m,'title'))+'</h1><p class="lead">'+esc(M(m,'desc'))+'</p>'+article(m.id);
   if(m.sheet)h+=(m.id==='quests'?quests(m):m.id==='bosses'?bosses():m.id==='cards'?cards():generic(m));
   el.innerHTML=ST.q?hl(h,ST.q):h;
