@@ -163,7 +163,7 @@ footer{color:var(--muted);font-size:12px;margin-top:48px}
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <input id="q" type="search" autocomplete="off" aria-label="search">
   </div>
-  <div class="seg" role="group" aria-label="Language"><button data-l="ko">한국어</button><button data-l="en">EN</button></div>
+  <div class="seg" role="group" aria-label="Language"><button data-l="ko">한국어</button><button data-l="en">EN</button><button data-l="ja">日本語</button><button data-l="zht">繁中</button></div>
 </div></header>
 <div class="layout">
   <nav id="nav" aria-label="Menu"></nav>
@@ -171,18 +171,28 @@ footer{color:var(--muted);font-size:12px;margin-top:48px}
 </div>
 <script>
 /* 사이트 이름은 여기서 바꿀 수 있습니다 */
-var BRAND={ko:'검신제로 공략 가이드',en:"Dawn's Wake Guide"};
+var BRAND={ko:'검신제로 공략 가이드',en:"Dawn's Wake Guide",ja:"Dawn's Wake 攻略ガイド",zht:"Dawn's Wake 攻略指南"};
+var OFF={ko:0,en:1,ja:2,zht:3};
+var HERO={ko:'퀘스트, 전략 카드, 용어를 한곳에서 찾아보세요.',en:'Quests, strategy cards and key terms in one place.',ja:'クエスト、戦略札、用語をまとめて確認できます。',zht:'任務、策略卡與用語，一站查詢。'};
+var TAG={rep:{ko:'명성 조건',en:'Reputation',ja:'名声条件',zht:'聲望條件'},letter:{ko:'비둘기 전서',en:'Pigeon message',ja:'伝書鳩',zht:'飛鴿傳書'},day:{ko:'낮',en:'Daytime',ja:'昼',zht:'白天'},night:{ko:'밤',en:'Night',ja:'夜',zht:'夜晚'}};
 var UI={
  ko:{search:'퀘스트, 카드, 용어 검색',all:'전체',filter:'이 페이지에서 찾기',results:'검색 결과',none:'결과가 없습니다.',items:'건',explore:'둘러보기',
    pre:'선행',reward:'보상',steps:'진행',main:'메인 퀘스트',outer:'외공 방어',inner:'내공 방어',weak:'약점격파',key:'핵심',phase:['형','동생'],
    lv:'수치 기준',cd:'재사용 대기',passive:'패시브',rage:'분노',cap:'상한',types:{'메인':'메인','세력':'세력','서브':'서브','입문':'입문','던전':'던전'},updated:'자료 기준일'},
  en:{search:'Search quests, cards, terms',all:'All',filter:'Filter this page',results:'Search results',none:'No results.',items:'items',explore:'Explore',
    pre:'Requires',reward:'Rewards',steps:'Steps',main:'Main quests',outer:'EXT DEF',inner:'Inner DEF',weak:'Weakness Break',key:'Key',phase:['Elder','Younger'],
-   lv:'Values at',cd:'Cooldown',passive:'Passive',rage:'Rage',cap:'cap',updated:'Data as of'}
+   lv:'Values at',cd:'Cooldown',passive:'Passive',rage:'Rage',cap:'cap',updated:'Data as of'},
+ ja:{search:'クエスト・戦略札・用語を検索',all:'すべて',filter:'このページ内を検索',results:'検索結果',none:'結果がありません。',items:'件',explore:'メニュー',
+   pre:'前提',reward:'報酬',steps:'進行',main:'メインクエスト',outer:'外功防御',inner:'内功防御',weak:'弱点撃破',key:'要点',phase:['兄','弟'],
+   lv:'数値',cd:'クールタイム',passive:'パッシブ',rage:'怒気',cap:'上限',updated:'データ基準日',nnote:'「N」はカードのレベルで変わる数値です。'},
+ zht:{search:'搜尋任務、策略卡、用語',all:'全部',filter:'在此頁面搜尋',results:'搜尋結果',none:'沒有結果。',items:'項',explore:'瀏覽',
+   pre:'前置',reward:'獎勵',steps:'流程',main:'主線任務',outer:'外功防禦',inner:'內功防禦',weak:'破綻擊破',key:'重點',phase:['兄','弟'],
+   lv:'數值',cd:'冷卻時間',passive:'被動',rage:'怒氣',cap:'上限',updated:'資料基準日',nnote:'「N」為隨卡牌等級變動的數值。'}
 };
+UI.ko.nnote='「N」은 카드 레벨에 따라 달라지는 수치입니다.';UI.en.nnote='"N" marks values that scale with card level.';
 var D=null,MENU=[],L='ko',PAGE='home',ST={};
-try{L=localStorage.getItem('sgz_lang')||'ko'}catch(e){}
-var qs=new URLSearchParams(location.search); if(qs.get('lang')) L=qs.get('lang')==='en'?'en':'ko';
+try{L=localStorage.getItem('sgz_lang')||'ko';if(!OFF.hasOwnProperty(L))L='ko'}catch(e){}
+var qs=new URLSearchParams(location.search); if(qs.get('lang')) L=OFF.hasOwnProperty(qs.get('lang'))?qs.get('lang'):'ko';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function md(s){return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<i>$1</i>').replace(/\n/g,'<br>')}
@@ -190,12 +200,14 @@ function hl(html,q){if(!q)return html;var re=new RegExp('('+q.replace(/[.*+?^${}
 function u(k){return UI[L][k]}
 function M(m,k){return m[k+'_'+L]||m[k+'_ko']||''}
 // 헤더 규칙: ko:라벨 / en:Label / *:라벨|Label
-function cols(h){return h.map(function(x,i){var m=String(x).match(/^(ko|en|\*):(.*)$/);if(!m)return{i:i,lang:'*',ko:x,en:x};if(m[1]==='*'){var p=m[2].split('|');return{i:i,lang:'*',ko:p[0],en:p[1]||p[0]}}return{i:i,lang:m[1],ko:m[2],en:m[2]}})}
+function cols(h){return h.map(function(x,i){var m=String(x).match(/^(ko|en|ja|zht|\*):(.*)$/);if(!m)return{i:i,lang:'*',ko:x,en:x,ja:x,zht:x};if(m[1]==='*'){var p=m[2].split('|');return{i:i,lang:'*',ko:p[0],en:p[1]||p[0],ja:p[2]||p[1]||p[0],zht:p[3]||p[1]||p[0]}}return{i:i,lang:m[1],ko:m[2],en:m[2],ja:m[2],zht:m[2]}})}
 function vis(c){return c.filter(function(x){return x.lang==='*'||x.lang===L})}
-function idx(c,n){if(!n)return -1;var i=+n-1,x=c[i];if(!x)return -1;return(x.lang==='ko'&&L==='en')?i+1:i}
-function rowsOf(s){var r=D[s]||[];return r.slice(1)}
+function idx(c,n){if(!n)return -1;var i=+n-1,x=c[i];if(!x)return -1;return x.lang==='ko'?i+OFF[L]:i}
+// 업데이트 전이라 숨길 지역(한국어 이름). 공개할 때 목록에서 지우면 됩니다.
+var HIDE_REGIONS=['빈해','운주','유주'];
+function rowsOf(s){var r=(D[s]||[]).slice(1);if(s==='Quests')r=r.filter(function(x){return HIDE_REGIONS.indexOf(x[0])<0});return r}
 function lc(r,i){return r[i]||''} // ko 열 i, en 열 i+1
-function bi(r,i){return L==='en'?(r[i+1]||r[i]):r[i]}
+function bi(r,i){return r[i+OFF[L]]||r[i+1]||r[i]}
 
 function boot(){
   fetch('data.json',{cache:'no-cache'}).then(function(r){return r.json()}).then(function(j){
@@ -215,7 +227,7 @@ function nav(){var h='',g=null,gq=document.getElementById('q').value.trim();
 
 function article(id){var rs=rowsOf('Articles').filter(function(r){return r[0]===id});if(!rs.length)return'';
   var h='<div class="article">',ul=false;
-  rs.forEach(function(r){var k=r[1],t=L==='en'?(r[3]||r[2]):r[2];if(k!=='li'&&ul){h+='</ul>';ul=false}
+  rs.forEach(function(r){var k=r[1],t=r[2+OFF[L]]||r[3]||r[2];if(k!=='li'&&ul){h+='</ul>';ul=false}
     if(k==='h')h+='<h3>'+md(t)+'</h3>';else if(k==='li'){if(!ul){h+='<ul>';ul=true}h+='<li>'+md(t)+'</li>'}
     else if(k==='tip')h+='<div class="tip">'+md(t)+'</div>';else h+='<p>'+md(t)+'</p>'});
   return h+(ul?'</ul>':'')+'</div>'}
@@ -230,13 +242,13 @@ function uniq(a){return a.filter(function(x,i){return x&&a.indexOf(x)===i})}
 /* ---- 퀘스트 */
 function qtags(pre){var t=[],m;
   if((m=pre.match(/Lv\s?\d+/g)))m.forEach(function(x){t.push(['lv',x])});
-  [['낮','time'],['밤','time'],['daytime','time'],['night','time'],['비둘기 전서','gate'],['letter','gate'],['명성','gate'],['rep','gate']].forEach(function(p){if(pre.toLowerCase().indexOf(p[0])>=0)t.push([p[1],p[0]==='rep'||p[0]==='명성'?(L==='en'?'Reputation':'명성 조건'):p[0]==='letter'||p[0]==='비둘기 전서'?(L==='en'?'Pigeon message':'비둘기 전서'):p[0]==='낮'||p[0]==='daytime'?(L==='en'?'Daytime':'낮'):(L==='en'?'Night':'밤')])});
+  [['낮','time','day'],['daytime','time','day'],['昼','time','day'],['白天','time','day'],['밤','time','night'],['night','time','night'],['夜','time','night'],['비둘기 전서','gate','letter'],['letter','gate','letter'],['伝書鳩','gate','letter'],['飛鴿傳書','gate','letter'],['명성','gate','rep'],['rep','gate','rep'],['名声','gate','rep'],['聲望','gate','rep']].forEach(function(p){if(pre.toLowerCase().indexOf(p[0])>=0)t.push([p[1],TAG[p[2]][L]])});
   return t}
 function questCard(r,n,open){
-  var name=bi(r,4),pre=bi(r,6),walk=bi(r,8),rw=bi(r,10),fight=/처치|defeat/i.test(walk);
+  var name=bi(r,8),pre=bi(r,12),walk=bi(r,16),rw=bi(r,20),fight=/처치|defeat|撃破|倒す|擊敗|擊殺|打倒/i.test(walk);
   var steps=walk.split(/\s*→\s*/).filter(Boolean);
-  var h='<details class="q'+(fight?' fight':'')+'"'+(open?' open':'')+'><summary>'+(n?'<span class="no">'+n+'</span>':'')+'<div><h3>'+esc(name)+'</h3>'+(L==='ko'?'<div class="sub">'+esc(r[5])+'</div>':'')+'</div><span class="caret" aria-hidden="true">▾</span><div class="tags">';
-  if(!n)h+='<span class="tag">'+esc(bi(r,2))+'</span>';
+  var h='<details class="q'+(fight?' fight':'')+'"'+(open?' open':'')+'><summary>'+(n?'<span class="no">'+n+'</span>':'')+'<div><h3>'+esc(name)+'</h3>'+(L!=='en'?'<div class="sub">'+esc(r[9])+'</div>':'')+'</div><span class="caret" aria-hidden="true">▾</span><div class="tags">';
+  if(!n)h+='<span class="tag">'+esc(bi(r,4))+'</span>';
   h+='<span class="tag">'+u('pre')+' · '+esc(pre)+'</span>';
   uniq(qtags(pre).map(function(t){return t.join('|')})).forEach(function(s){var t=s.split('|');h+='<span class="tag '+t[0]+'">'+esc(t[1])+'</span>'});
   h+='</div></summary><div class="qbody">';
@@ -248,10 +260,10 @@ function quests(m){var all=rowsOf('Quests'),c=cols(D.Quests[0]);
   var rs=all.filter(function(r){return bi(r,0)===ST.cat&&match(r,vis(c))});
   var h=toolbar(regions,rs.length).replace('data-cat="" aria-pressed="false">'+u('all')+'</button>','');
   h=h.replace(/<button class="chip" data-cat="" [^>]*>[^<]*<\/button>/,'');
-  var main=rs.filter(function(r){return r[2]==='메인'}),rest=rs.filter(function(r){return r[2]!=='메인'});
+  var main=rs.filter(function(r){return r[4]==='메인'}),rest=rs.filter(function(r){return r[4]!=='메인'});
   if(main.length){h+='<div class="sec">'+u('main')+'</div><div class="route">';main.forEach(function(r,i){h+=questCard(r,i+1,i===0&&!ST.q)});h+='</div>'}
-  uniq(rest.map(function(r){return r[2]})).forEach(function(t){var g=rest.filter(function(r){return r[2]===t});
-    h+='<div class="sec">'+esc(L==='en'?g[0][3]:t)+' <span class="sub">'+g.length+'</span></div><div class="qgrid">';g.forEach(function(r){h+=questCard(r,0,!!ST.q)});h+='</div>'});
+  uniq(rest.map(function(r){return r[4]})).forEach(function(t){var g=rest.filter(function(r){return r[4]===t});
+    h+='<div class="sec">'+esc(bi(g[0],4))+' <span class="sub">'+g.length+'</span></div><div class="qgrid">';g.forEach(function(r){h+=questCard(r,0,!!ST.q)});h+='</div>'});
   if(!rs.length)h+='<p class="empty">'+u('none')+'</p>';return h}
 
 /* ---- 보스 */
@@ -276,13 +288,13 @@ function bosses(){var all=rowsOf('Bosses'),c=cols(D.Bosses[0]);
   return h+(rs.length?'':'<p class="empty">'+u('none')+'</p>')}
 
 /* ---- 전략 카드 */
-function cards(){var all=rowsOf('Cards'),c=cols(D.Cards[0]),lv=ST.lv||1;
+function cards(){var all=rowsOf('Cards'),c=cols(D.Cards[0]);
   var rs=all.filter(function(r){return match(r,vis(c))});
-  var h='<div class="toolbar"><span class="sub">'+u('lv')+'</span><div class="seg" role="group"><button data-lv="1" aria-pressed="'+(lv===1)+'">Lv1</button><button data-lv="10" aria-pressed="'+(lv===10)+'">Lv10</button></div><input class="filter" id="pf" placeholder="'+u('filter')+'" value="'+esc(ST.q||'')+'"><span class="count">'+rs.length+' '+u('items')+'</span></div><div class="grid3">';
-  rs.forEach(function(r){var eff=esc(bi(r,8)).replace(/\[([\d.]+),([\d.]+)\]/g,function(m,a,b){return'<span class="v">'+(lv===1?a:b)+'</span>'});
-    var cost=bi(r,2),cd=bi(r,4),passive=/[−-]/.test(cost);
-    h+='<article class="card"><div class="card-top"><div><h3>'+esc(bi(r,0))+'</h3>'+(L==='ko'?'<div class="sub">'+esc(r[1])+'</div>':'')+'</div><div class="cost">'+(passive?esc(cost.replace(/[^\d−-]/g,'')||cost)+'<small>'+u('rage')+' '+u('cap')+'</small>':esc(cost)+'<small>'+u('rage')+'</small>')+'</div></div>';
-    h+='<div class="tags">'+bi(r,6).split(/,\s*/).map(function(x){return'<span class="tag">'+esc(x)+'</span>'}).join('')+'</div><p>'+eff+'</p><div class="cd">'+(passive?u('passive'):u('cd')+' '+esc(cd))+'</div></article>'});
+  var h='<p class="sub" style="margin:0 0 10px">'+esc(u('nnote'))+'</p><div class="toolbar"><input class="filter" id="pf" placeholder="'+u('filter')+'" value="'+esc(ST.q||'')+'"><span class="count">'+rs.length+' '+u('items')+'</span></div><div class="grid3">';
+  rs.forEach(function(r){var eff=esc(bi(r,16)).replace(/(^|[^A-Za-z])N(?![A-Za-z])/g,'$1<span class="v">N</span>');
+    var cost=bi(r,4),cd=bi(r,8),passive=/[−-]/.test(cost);
+    h+='<article class="card"><div class="card-top"><div><h3>'+esc(bi(r,0))+'</h3>'+(L!=='en'?'<div class="sub">'+esc(r[1])+'</div>':'')+'</div><div class="cost">'+(passive?esc(cost.replace(/[^\d−-]/g,'')||cost)+'<small>'+u('rage')+' '+u('cap')+'</small>':esc(cost)+'<small>'+u('rage')+'</small>')+'</div></div>';
+    h+='<div class="tags">'+bi(r,12).split(/[,、，]\s*/).map(function(x){return'<span class="tag">'+esc(x)+'</span>'}).join('')+'</div><p>'+eff+'</p><div class="cd">'+(passive?u('passive'):u('cd')+' '+esc(cd))+'</div></article>'});
   return h+'</div>'}
 
 /* ---- 일반 표 */
@@ -297,13 +309,13 @@ function generic(m){var all=rowsOf(m.sheet),c=cols(D[m.sheet][0]),v=vis(c),fi=id
     rs.forEach(function(r){h+='<tr>'+show.map(function(x){return'<td'+(x.i===ti?' class="name"':'')+'>'+md(r[x.i])+'</td>'}).join('')+'</tr>'});h+='</tbody></table></div>'}
   return h+(rs.length?'':'<p class="empty">'+u('none')+'</p>')}
 
-function home(){var h='<div class="hero"><h1>'+esc(BRAND[L])+'</h1><p>'+(L==='en'?'Quests, strategy cards and key terms in one place.':'퀘스트, 전략 카드, 용어를 한곳에서 찾아보세요.')+'</p></div>'+article('home')+'<div class="sec">'+u('explore')+'</div><div class="tiles">';
+function home(){var h='<div class="hero"><h1>'+esc(BRAND[L])+'</h1><p>'+HERO[L]+'</p></div>'+article('home')+'<div class="sec">'+u('explore')+'</div><div class="tiles">';
   MENU.slice(1).forEach(function(m){h+='<a class="tile" href="#'+m.id+'"><span aria-hidden="true" style="font-size:20px">'+esc(m.icon)+'</span><b>'+esc(M(m,'title'))+'</b><span>'+esc(M(m,'desc'))+'</span></a>'});
   return h+'</div>'}
 function search(q){var ql=q.toLowerCase(),h='<h1>'+u('results')+'</h1><p class="lead">“'+esc(q)+'”</p>',n=0;
   MENU.forEach(function(m){var hits=[];
     if(m.sheet&&D[m.sheet]){var v=vis(cols(D[m.sheet][0]));rowsOf(m.sheet).forEach(function(r){var t=v.map(function(x){return r[x.i]}).filter(Boolean).join(' · ');if(t.toLowerCase().indexOf(ql)>=0)hits.push(t)})}
-    rowsOf('Articles').forEach(function(r){if(r[0]!==m.id)return;var t=L==='en'?r[3]:r[2];if(String(t).toLowerCase().indexOf(ql)>=0)hits.push(t)});
+    rowsOf('Articles').forEach(function(r){if(r[0]!==m.id)return;var t=r[2+OFF[L]]||r[2];if(String(t).toLowerCase().indexOf(ql)>=0)hits.push(t)});
     if(!hits.length)return;n+=hits.length;h+='<div class="rg"><h3>'+esc(m.icon)+' '+esc(M(m,'title'))+' · '+hits.length+'</h3>';
     hits.slice(0,25).forEach(function(t){var i=t.toLowerCase().indexOf(ql),s=Math.max(0,i-40);h+='<a class="res" href="#'+m.id+'" data-q="'+esc(q)+'"><small>'+esc((s?'…':'')+t.slice(s,i+q.length+110))+'…</small></a>'});h+='</div>'});
   return hl(h+(n?'':'<p class="empty">'+u('none')+'</p>'),q)}
